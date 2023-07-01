@@ -5,8 +5,10 @@ go 1.20
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/clynt707/discord-oauth2 v0.0.0-20230504124912-8f582ca3b1ca // indirect
+	github.com/dwin/goArgonPass v1.2.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gofiber/fiber/v2 v2.47.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
