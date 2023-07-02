@@ -44,7 +44,7 @@ func VerUser(token string) model.ValidateUser {
 	return model.ValidateUser{Admin: admin, ValidUser: true, Banned: banned, Username: username, Uid: int(uid), JWT: jwt, ApiKey: adminToken}
 }
 
-func Login(username string, password string) (string, error) {
+func Login(username string, password string, ip string) (string, error) {
 	// Create a new database connection
 	db := DB
 
@@ -101,4 +101,50 @@ func Register(username string, email string, password string, ip string) (string
 	db.Create(&model.Users{Username: username, Email: email, Password: hashedPassword, Token: token, AdminToken: adminToken, Premium: "false", Admin: "false", Verified: "false", Ip: ip, LastIp: ip, LastLogin: "never", Registered: "never"})
 	// Return the token
 	return fmt.Sprintf("%v", result["token"]), nil
+}
+
+func Reset(email string) (string, error) {
+	db := DB
+	result := map[string]any{}
+
+	db.Model(&model.Users{}).Select("id").Where("email iLIKE ?", email).Find(&result)
+	if len(result) == 0 {
+		return "", errors.New("No user with that email")
+	}
+
+	token := uuid.New().String()
+	db.Exec("INSERT INTO resets (token, email, expires) VALUES (?, ?, NOW() + INTERVAL '15 minutes')", token, email)
+	return token, nil
+
+}
+
+func ResetPassword(token string, password string) error {
+	db := DB
+	result := map[string]any{}
+
+	db.Model(&model.Resets{}).Select("id").Where("token = ? AND expires > NOW()", token).Find(&result)
+	if len(result) == 0 {
+		return errors.New("Invalid token")
+	}
+
+	hashedPassword, err := argonpass.Hash(password, nil)
+	if err != nil {
+		return errors.New("Error hashing password")
+	}
+
+	db.Exec("UPDATE users SET password = ? WHERE email = ?", hashedPassword, result["email"])
+	return nil
+}
+
+func CreateProgram(programName string, encKey string, username string) error {
+	db := DB
+	result := map[string]any{}
+
+	db.Model(&model.Programs{}).Select("id").Where("program_name = ?", programName).Find(&result)
+	if len(result) != 0 {
+		return errors.New("Program name already taken")
+	}
+
+	db.Create(&model.Programs{ProgramName: programName, EncKey: encKey, Username: username})
+	return nil
 }
